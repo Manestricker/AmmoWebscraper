@@ -9,11 +9,29 @@ import re
 import datetime
 
 def extract_first_value(text):
-    return text.split()[0].replace('$', '')
+    a = text.split()[0].replace('$', '')
+    a = a.replace(' ', '')
+    a = a.replace(',', '')
+    return a
+    try:
+        a = float(a)
+        if a.isdigit():
+            print(a,a.isdigit())
+            return a
+    except:
+        return None
 
 def extract_last_value(text):
     a = text.split()[-1].replace(')', '')
-    return a.replace('$', '')
+    a = a.replace('$', '')
+    a = a.replace(' ', '')
+    try:
+        a = float(a)
+        print(a,a.isdigit())
+        if a.isdigit():
+            return a
+    except:
+        return None
 
 def extract_info(data):
     round_count = None
@@ -55,12 +73,24 @@ def getSgData(link, csvName):
     df = tables[0] #turn dataframe into a single one
     df = df.drop('Image', axis=1) #axis 1 is the column, drops image column
     df['Cost Per Unit'] = df['Price'].apply(extract_first_value).astype(float) #convert prices to floats
-    df['Cost Per Round'] = df['Price'].apply(extract_last_value).astype(float)
+    #df['Cost Per Round'] = df['Price'].apply(extract_last_value)
+    #a, b, c = df['Name'].apply(extract_info)
+    #df['Round Count'] = float(a)
+    #df['Grain'] = b
+    #df['SKU'] = c
     df[['Round Count','Grain','SKU']] = df['Name'].apply(extract_info) #SKU doesn't work well, but the rest is ok.
     df['DateTime'] = datetime.datetime.now()
     df = df.drop('Price', axis=1)
-
+    df['Cost Per Round'] = df['Cost Per Unit'].div(df['Round Count'].astype(float))
+    
+    
     df.to_csv(csvName,header=False, mode='a') #Header must be manually added?
+    driver.close()
 
 #Execution
-getSgData("https://www.sgammo.com/catalog/pistol-ammo-sale/45-auto-acp-ammo", 'sgAmmo   .csv')
+
+getSgData("https://www.sgammo.com/catalog/pistol-ammo-sale/45-auto-acp-ammo", 'sgAmmo45.csv')
+getSgData("https://www.sgammo.com/catalog/pistol-ammo-sale/9mm-luger-ammo", 'sgAmmo9mm.csv')
+getSgData("https://www.sgammo.com/catalog/rifle-ammo-sale/223-556mm-ammo", 'sgAmmo223.csv')
+getSgData("https://www.sgammo.com/catalog/rimfire-ammo-sale/22-lr-ammo", 'sgAmmo22lr.csv')
+#Name	Quantity in Stock	Cost Per Unit	Cost Per Round	Round Count	Grain	SKU	DateTime
