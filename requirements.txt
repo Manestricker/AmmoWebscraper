@@ -3,3 +3,5 @@ plotly
 pandas
 selenium
 bs4
+yagmail
+keyring
