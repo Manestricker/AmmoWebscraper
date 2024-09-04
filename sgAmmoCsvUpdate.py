@@ -64,6 +64,7 @@ def getSgData(link, csvName):
     options = ChromeOptions()
     options.add_argument("--headless=new")
     driver = webdriver.Chrome(options=options)
+    #driver = webdriver.Firefox()
     driver.get(link)
     html=driver.page_source
 
