@@ -7,6 +7,7 @@ from io import StringIO
 import datetime
 import yagmail
 import keyring # type: ignore
+from selenium.webdriver.chrome.service import Service
 
 def extract_first_value(text):
     a = text.split()[0].replace('$', '')
@@ -72,8 +73,12 @@ def filterDataFrame(dataFrame, cpr, grain = 900, grainExact = False):
 
 def getSgData(link, csvName):
     options = ChromeOptions()
+    #options = ChromiumOptions()
     options.add_argument("--headless=new")
-    driver = webdriver.Chrome(options=options)
+    #driver = webdriver.Chrome(options=options)
+    serv =Service(executable_path='/usr/lib/chromium-browser/chromedriver')
+    driver = webdriver.Chrome(service=serv,options=options)
+    #driver = webdriver.chromium(options=options)
     #driver = webdriver.Firefox()
     driver.get(link)
     html=driver.page_source
@@ -108,9 +113,13 @@ def sendEmail(to, subject, contents, descriptions):
 #Execution
 #Put sgAmmo links and fileNames for them to be store at
 sg45 = getSgData("https://www.sgammo.com/catalog/pistol-ammo-sale/45-auto-acp-ammo", 'sgAmmo45.csv')
+print("45 ACP Data Aquired")
 sg9 = getSgData("https://www.sgammo.com/catalog/pistol-ammo-sale/9mm-luger-ammo", 'sgAmmo9mm.csv')
+print("9mm Luger Data Aquired")
 sg223 = getSgData("https://www.sgammo.com/catalog/rifle-ammo-sale/223-556mm-ammo", 'sgAmmo223.csv')
+print("223/556 Data Aquired")
 sg22lr = getSgData("https://www.sgammo.com/catalog/rimfire-ammo-sale/22-lr-ammo", 'sgAmmo22lr.csv')
+print("22LR Data Aquired")
 #Name	Quantity in Stock	Cost Per Unit	Cost Per Round	Round Count	Grain	SKU	DateTime
 
 #Filters and the descriptions they will recieve in the email generated
