@@ -58,7 +58,7 @@ def extract_info(data):
 
     return pd.Series([round_count, grain, sku], index=['Round Count', 'Grain', 'SKU'])
 
-def filterDataFrame(dataFrame, cpr, grain = 900, grainExact = False):
+def filterDataFrame(dataFrame, cpr, grain = 900, grainExact = False, size = 10):
     #cpr is the maximum cost per round to look for
     #grain is grain size to look for
     #grainExact looks for exactly that grain
@@ -69,6 +69,7 @@ def filterDataFrame(dataFrame, cpr, grain = 900, grainExact = False):
         df = df[df['Grain'] <= grain]
     df = df.drop('DateTime', axis=1)
     df = df.sort_values(by=['Cost Per Round'])
+    df = df.head(size)
     return df
 
 def getSgData(link, csvName):
@@ -126,11 +127,13 @@ print("22LR Data Aquired")
 #filterDataFrame(dfName, CPR, grain = 900, grainExact = False)
 #grain and graionExact don't need to be filled out
 filterList = [filterDataFrame(sg45,0.6,185),
+              filterDataFrame(sg45,0.5,230, True, size=5),
               filterDataFrame(sg9,0.25),
               filterDataFrame(sg223,0.50),
               filterDataFrame(sg22lr, .10, 40, True)]
-filterDescriptions = ["45 ACP, CPR <= to $0.60, grain <=185",
-                       "9mm Luger, CPR <= $0.25",
-                       "223/556, CPR <= $0.50",
-                       "22Lr, CPR <= $0.10, grain == 40"]
+filterDescriptions = ["45 ACP, CPR <= to $0.60, grain <= 185",
+                      "45 ACP, CPR <= to $0.45, grain == 230, size =5",
+                      "9mm Luger, CPR <= $0.25",
+                      "223/556, CPR <= $0.50",
+                      "22Lr, CPR <= $0.10, grain == 40"]
 sendEmail("davidbdeltz@gmail.com", "sgAmmo Scraped Data", filterList, filterDescriptions) #replace To with whatever you account you want it sent to
