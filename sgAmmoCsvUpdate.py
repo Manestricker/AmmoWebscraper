@@ -8,6 +8,7 @@ import datetime
 import yagmail
 import keyring # type: ignore
 from selenium.webdriver.chrome.service import Service
+import pickle
 
 def extract_first_value(text):
     a = text.split()[0].replace('$', '')
@@ -101,9 +102,18 @@ def getSgData(link, csvName):
     driver.close()
     return df
 
+def checkForNew(pickledListFileName, newList):
+    oldData = pickle.load(open(pickledListFileName, 'rb'))
+    rtrnFrameList = []
+    for i in range(len(newList)):
+        rtrnFrameList.append(oldData[i].compare(newList[i],result_names=("old", "new")))
+    
+    return rtrnFrameList
 
-def sendEmail(to, subject, contents, descriptions):
+def sendEmail(to, subject, contents, descriptions, pickledListFileName):
     body = "<p>This is an auto-generated email containing filtered data from the most recent webscrape of sgAmmo.com</p>"
+    changeList = pd.concat(checkForNew(pickledListFileName, contents))
+    body = body + "<hr><p>Changes found in the new data:</p>" + changeList.to_html()
     for i in range(len(contents)):
         body = body + '<hr><h2>'+descriptions[i]+'</h2>' + contents[i].to_html()
     yag = yagmail.SMTP('davidbdeltz@gmail.com', keyring.get_password("gmail","davidbdeltz")) #replace with your email account name
@@ -136,4 +146,10 @@ filterDescriptions = ["45 ACP, CPR <= to $0.60, grain <= 185",
                       "9mm Luger, CPR <= $0.25",
                       "223/556, CPR <= $0.50",
                       "22Lr, CPR <= $0.10, grain == 40"]
-sendEmail("davidbdeltz@gmail.com", "sgAmmo Scraped Data", filterList, filterDescriptions) #replace To with whatever you account you want it sent to
+
+
+sendEmail("davidbdeltz@gmail.com", "sgAmmo Scraped Data", filterList, filterDescriptions, 'filterList') #replace To with whatever you account you want it sent to
+print("email sent")
+file_pickle = open('filterList', 'wb')
+pickle.dump(filterList,file_pickle)
+print("pickled data")
