@@ -9,6 +9,7 @@ import yagmail
 import keyring # type: ignore
 from selenium.webdriver.chrome.service import Service
 import pickle
+from pathlib import Path
 
 def extract_first_value(text):
     a = text.split()[0].replace('$', '')
@@ -77,11 +78,10 @@ def getSgData(link, csvName):
     options = ChromeOptions()
     #options = ChromiumOptions()
     options.add_argument("--headless=new")
-    #driver = webdriver.Chrome(options=options)
-    serv =Service(executable_path='/usr/lib/chromium-browser/chromedriver')
-    driver = webdriver.Chrome(service=serv,options=options)
-    #driver = webdriver.chromium(options=options)
-    #driver = webdriver.Firefox()
+    driver = webdriver.Chrome(options=options)
+    #The driver and service below is for raspberry pi 
+    #serv = Service(executable_path='/usr/lib/chromium-browser/chromedriver')
+    #driver = webdriver.Chrome(service=serv,options=options)
     driver.get(link)
     html=driver.page_source
 
@@ -110,10 +110,11 @@ def checkForNew(pickledListFileName, newList):
     
     return rtrnFrameList
 
-def sendEmail(to, subject, contents, descriptions, pickledListFileName):
+def sendEmail(to, subject, contents, descriptions, pickledListFileName = None):
     body = "<p>This is an auto-generated email containing filtered data from the most recent webscrape of sgAmmo.com</p>"
-    changeList = pd.concat(checkForNew(pickledListFileName, contents))
-    body = body + "<hr><p>Changes found in the new data:</p>" + changeList.to_html()
+    if pickledListFileName != None:
+        changeList = pd.concat(checkForNew(pickledListFileName, contents))
+        body = body + "<hr><p>Changes found in the new data:</p>" + changeList.to_html()
     for i in range(len(contents)):
         body = body + '<hr><h2>'+descriptions[i]+'</h2>' + contents[i].to_html()
     yag = yagmail.SMTP('davidbdeltz@gmail.com', keyring.get_password("gmail","davidbdeltz")) #replace with your email account name
@@ -147,8 +148,11 @@ filterDescriptions = ["45 ACP, CPR <= to $0.60, grain <= 185",
                       "223/556, CPR <= $0.50",
                       "22Lr, CPR <= $0.10, grain == 40"]
 
-
-sendEmail("davidbdeltz@gmail.com", "sgAmmo Scraped Data", filterList, filterDescriptions, 'filterList') #replace To with whatever you account you want it sent to
+oldFilterList = Path('filterList')
+if oldFilterList.is_file():
+    sendEmail("davidbdeltz@gmail.com", "sgAmmo Scraped Data", filterList, filterDescriptions, 'filterList') #replace To with whatever you account you want it sent to
+else:
+    sendEmail("davidbdeltz@gmail.com", "sgAmmo Scraped Data", filterList, filterDescriptions) #replace To with whatever you account you want it sent to
 print("email sent")
 file_pickle = open('filterList', 'wb')
 pickle.dump(filterList,file_pickle)
